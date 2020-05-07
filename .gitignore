@@ -2,3 +2,4 @@
 .venv
 *.html
 output
+.mypy_cache
