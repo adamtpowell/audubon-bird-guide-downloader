@@ -8,7 +8,11 @@ Please do not distribute the images or other content scraped using this script. 
 
 __Note:__ For now, the scraper only supports New England birds.
 
-Clone the repository, then run `birds.py`.
+Clone the repository. 
+
+Create a python virtual environment and install the dependencies from requirements.txt.
+
+Run `birds.py` and wait for the script to finish.
 
 When the script finishes, copy all of the files in `output/media` to your anki `collections.media` folder.
 
