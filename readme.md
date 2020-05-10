@@ -38,3 +38,4 @@ Then, open Anki and click `Import File`. Select `output/birds.txt` when prompted
 
 * A command line flag for different regions of birds.
 * Importing multiple photographs
+* Sort by rarity in the chosen region
