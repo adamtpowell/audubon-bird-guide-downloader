@@ -36,5 +36,5 @@ Then, open Anki and click `Import File`. Select `output/birds.txt` when prompted
 
 ## Roadmap
 
-A command line flag for different regions of birds.
-Importing multiple photographs
+* A command line flag for different regions of birds.
+* Importing multiple photographs
