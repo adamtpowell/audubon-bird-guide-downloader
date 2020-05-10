@@ -100,6 +100,8 @@ def save_bird(bird_id: str) -> str:
     while len(fields) < 24:
         fields.append("")
 
+    print("{} done.".format(bird_id))
+
     return "\t".join(fields)
 
 def curl_bird_info_page(bird_id: str) -> str:
