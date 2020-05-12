@@ -1,8 +1,12 @@
-# Audobon Bird Guide Downloader
+# Audubon Bird Guide Downloader
 
 This is an unofficial web scraper for downloading files from the [Audubon bird guide](https://www.audubon.org/bird-guide). It also supplies a file for import into Anki.
 
 Please do not distribute the images or other content scraped using this script.
+
+## Why?
+
+If you want a lot of photos and illustrations of birds for personal purposes, if you want bird recordings for personal purposes, or you want to learn about birds with Anki or other software.
 
 ## Usage
 
@@ -55,7 +59,11 @@ Create a new deck and card type, with the following fields:
 Common Name
 Scientific Name
 Drawing
-Photograph
+Photograph 1
+Photograph 2
+...
+Photograph 9
+Photograph 10
 Call 1 Audio
 Call 1 Label
 Call 2 Audio
@@ -65,8 +73,4 @@ Call 10 Audio
 Call 10 Label
 ```
 
-Then, open Anki and click `Import File`. Select `output/birds.txt` when prompted for a file. Make sure that you select "allow HTML in fields", or the images will be garbled.
-
-## Roadmap
-
-* Importing multiple photographs
+Then, open Anki and click `Import File`. Select `output/birds.txt` when prompted for a file. Make sure that you select "allow HTML in fields", or the images will not import.

@@ -43,12 +43,15 @@ def save_bird(bird_id: str) -> str:
     #   Call label
 
     fields: List[str] = []
+    expected_fields = 0 # This stores the number of fields currently expected. Used for correcting empty fields.
 
     common_name = soup.find(class_="common-name").string.strip()
     fields.append(common_name)
+    expected_fields += 1
 
     scientific_name = soup.find(class_="scientific-name").string.strip()
     fields.append(scientific_name)
+    expected_fields += 1
 
     # Illustration
     try:
@@ -61,17 +64,25 @@ def save_bird(bird_id: str) -> str:
     except:
         print("{} failed to find illustration".format(bird_id))
         fields.append("IMAGE NOT FOUND")
+    expected_fields += 1
 
-    # Photograph
-    try:
-        photograph_url = soup.select(".grid-gallery__lightbox")[0]['data-href']
-        photograph_local_path = "audubon-photo-{}.jpg".format(bird_id)
-        with open('output/media/' + photograph_local_path, 'wb') as f:
-            f.write(requests.get(photograph_url).content)
-        fields.append('"<img src=""{}"">"'.format(photograph_local_path))
-    except:
-        print("{} failed to find photo".format(bird_id))
-        fields.append("IMAGE NOT FOUND")
+    # Download photographs.
+    photograph_elements = soup.select(".grid-gallery__lightbox")
+    photograph_local_paths = []
+    for i in range(len(photograph_elements)):
+        try:
+            photograph_url = photograph_elements[i]['data-href']
+            photograph_local_paths.append("audubon-photo-{}-{}.jpg".format(bird_id, i))
+            with open('output/media/' + photograph_local_paths[i], 'wb') as f:
+                f.write(requests.get(photograph_url).content)
+            fields.append('"<img src=""{}"">"'.format(photograph_local_paths[i]))
+        except:
+            fields.append("IMAGE NOT FOUND")
+
+    expected_fields += 10
+    fields = fields[:expected_fields] # Truncate if there are more calls than desired.
+    while len(fields) < expected_fields:
+        fields.append("")
 
     # Calls
     call_parent = soup.find(class_="field-name-field-bird-audio")
@@ -94,10 +105,10 @@ def save_bird(bird_id: str) -> str:
         fields.append("[sound:{}]".format(call_local_path))
         fields.append(call_description)
 
-    fields = fields[:24]
 
-    # Blank out the rest of the fields cause anki dumb
-    while len(fields) < 24:
+    expected_fields += 20
+    fields = fields[:expected_fields] # Truncate if there are more calls than desired.
+    while len(fields) < expected_fields:
         fields.append("")
 
     print("{} done.".format(bird_id))
@@ -109,8 +120,8 @@ def curl_bird_info_page(bird_id: str) -> str:
     return response.text
 
 def curl_bird_list_page(page: int, region_tid: int) -> str:
-    if region_tid == -1:
-        url = "https://www.audubon.org/bird-guide?page={}".format(page) # -1 means all regions.
+    if region_tid == -1: # -1 means all regions.
+        url = "https://www.audubon.org/bird-guide?page={}".format(page)
     else:
         url = "https://www.audubon.org/bird-guide?page={}&field_bird_family_tid=All&field_bird_region_tid={}".format(page, region_tid)
 
@@ -150,7 +161,7 @@ if __name__ == "__main__":
     bird_ids = get_bird_ids(0, region_tid)
     
     print("Loading birds...")
-    bird_list = Pool(processes = 16).map(save_bird, bird_ids)
+    bird_list = Pool(processes = 8).map(save_bird, bird_ids)
 
     with open("output/birds.txt", "w") as f:
         f.write("\n".join(bird_list))
