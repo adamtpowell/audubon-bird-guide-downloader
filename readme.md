@@ -6,13 +6,32 @@ Please do not distribute the images or other content scraped using this script. 
 
 ## Usage
 
-__Note:__ For now, the scraper only supports New England birds.
-
 Clone the repository. 
 
 Create a python virtual environment and install the dependencies from requirements.txt.
 
-Run `birds.py` and wait for the script to finish.
+To save all birds in the guide, run `birds.py` and wait for the script to finish.
+
+If you want only birds from a given region, use one of the following:
+
+```bash
+python birds.py "alaska and the north"
+python birds.py "california"
+python birds.py "eastern-canada"
+python birds.py "florida"
+python birds.py "great-lakes"
+python birds.py "mid-atlantic"
+python birds.py "new-england"
+python birds.py "northwest"
+python birds.py "plains"
+python birds.py "rocky-mountains"
+python birds.py "southeast"
+python birds.py "southwest"
+python birds.py "texas"
+python birds.py "western-canada"
+```
+
+## Loading into Anki
 
 When the script finishes, copy all of the files in `output/media` to your anki `collections.media` folder.
 
@@ -36,6 +55,4 @@ Then, open Anki and click `Import File`. Select `output/birds.txt` when prompted
 
 ## Roadmap
 
-* A command line flag for different regions of birds.
 * Importing multiple photographs
-* Sort by rarity in the chosen region

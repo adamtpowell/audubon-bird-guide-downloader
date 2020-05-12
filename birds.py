@@ -109,15 +109,45 @@ def curl_bird_info_page(bird_id: str) -> str:
     return response.text
 
 def curl_bird_list_page(page: int, region_tid: int) -> str:
-    response = requests.get("https://www.audubon.org/bird-guide?page={}&field_bird_family_tid=All&field_bird_region_tid={}".format(page, region_tid))
+    if region_tid == -1:
+        url = "https://www.audubon.org/bird-guide?page={}".format(page) # -1 means all regions.
+    else:
+        url = "https://www.audubon.org/bird-guide?page={}&field_bird_family_tid=All&field_bird_region_tid={}".format(page, region_tid)
+
+    response = requests.get(url)
     return response.text
 
+def region_id_to_tid(region_name: str) -> int:
+    region_to_tid_dict = {
+        "alaska and the north": 130,
+        "california": 116,
+        "eastern-canada": 59,
+        "florida": 44,
+        "great-lakes": 49,
+        "mid-atlantic": 83,
+        "new-england": 48,
+        "northwest": 113,
+        "plains": 121,
+        "rocky-mountains": 110,
+        "southeast": 67,
+        "southwest": 119,
+        "texas": 66,
+        "western-canada": 138
+    }
+
+    return region_to_tid_dict[region_name]
+    
+
 if __name__ == "__main__":
-    # TODO: Give a region selector.
+    if not sys.argv[1] is None:
+        region_name = sys.argv[1]
+        region_tid = region_id_to_tid(region_name)
+    else:
+        region_tid = -1
 
     reset_output()
     
-    bird_ids = get_bird_ids(0, 48)
+    bird_ids = get_bird_ids(0, region_tid)
     
     print("Loading birds...")
     bird_list = Pool(processes = 16).map(save_bird, bird_ids)
