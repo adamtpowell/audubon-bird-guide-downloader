@@ -2,10 +2,10 @@ from bs4 import BeautifulSoup
 import requests
 from typing import List
 import os
-from tqdm import tqdm
 import shutil
 import sys
-from multiprocessing import Pool, Lock
+import argparse
+from multiprocessing import Pool
 
 # Returns a list of all of the bird urls.
 def get_bird_ids(starting_page: int, region_tid: int) -> List[str]:
@@ -147,19 +147,26 @@ def region_id_to_tid(region_name: str) -> int:
     }
 
     return region_to_tid_dict[region_name]
-    
+
 
 if __name__ == "__main__":
-    if not sys.argv[1] is None:
+    parser = argparse.ArgumentParser(
+        prog = 'ProgramName',
+        description = 'What the program does',
+    )
+
+
+
+    if len(sys.argv) > 1:
         region_name = sys.argv[1]
         region_tid = region_id_to_tid(region_name)
     else:
         region_tid = -1
 
     reset_output()
-    
+
     bird_ids = get_bird_ids(0, region_tid)
-    
+
     print("Loading birds...")
     bird_list = Pool(processes = 8).map(save_bird, bird_ids)
 
