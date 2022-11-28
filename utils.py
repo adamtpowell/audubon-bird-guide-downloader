@@ -1,4 +1,3 @@
-import json
 from bs4 import BeautifulSoup
 import requests
 from typing import List
@@ -27,7 +26,7 @@ def reset_output():
     os.makedirs("output/media")
 
 # Saves the files related to a single bird
-def save_bird(bird_id: str):
+def get_bird_info(bird_id: str) -> dict:
     page_content = curl_bird_info_page(bird_id)
     soup = BeautifulSoup(page_content, 'html.parser')
 
@@ -38,58 +37,56 @@ def save_bird(bird_id: str):
     try:
         illustration_url = soup.select(".illustration > img")[0]['src']
         illustration_url = illustration_url.replace("bird_illustration", "nas_bird_teaser_illustration") # The teaser is larger, for some reason
-        illustration_local_path = "audubon-illustration-{}.jpg".format(bird_id)
-        with open('output/media/' + illustration_local_path, 'wb') as f:
-            f.write(requests.get(illustration_url).content)
+        illustration_local_url = "audubon-illustration-{}.jpg".format(bird_id)
+
+        illustration = {
+            "global_url": illustration_url,
+            "local_url": illustration_local_url,
+        }
     except:
+        illustration = {}
         print("{} failed to find illustration".format(bird_id))
 
     # Download photographs.
+    photographs = []
+
     photograph_elements = soup.select(".grid-gallery__lightbox")
-    photograph_local_paths = []
     for i in range(len(photograph_elements)):
-        try:
-            photograph_url = photograph_elements[i]['data-href']
-            photograph_local_paths.append("audubon-photo-{}-{}.jpg".format(bird_id, i))
-            with open('output/media/' + photograph_local_paths[i], 'wb') as f:
-                f.write(requests.get(photograph_url).content)
-        except:
-            pass
+        # try:
+            photograph_global_url = photograph_elements[i]['data-href']
+            photograph_local_url = "audubon-photo-{}-{}.jpg"
+
+            photographs.append({
+                "global_url": photograph_global_url,
+                "local_url": photograph_local_url,
+            })
+        # except: pass
 
     # Download calls
-    call_parent = soup.find(class_="field-name-field-bird-audio")
-    call_elements = call_parent.find_all(class_="bird-audio-item") if call_parent else []
+    calls = []
 
-    if len(call_elements) == 0:
-        print("No calls for {}".format(bird_id))
-
-    call_local_paths = []
+    call_elements = soup.select(".bird-audio-item")
     for index, call_element in enumerate(call_elements):
-        button = call_element.find("button")
         audio = call_element.find("audio")
 
-        call_url = audio['src']
-        try:
-            call_description = button['title'].strip()
-        except:
-            call_description = "No description found"
+        call_global_url = audio['src']
+        call_local_url = "audubon-sound-{}-{}.mp3".format(bird_id, index)
 
-        call_local_path = "audubon-sound-{}-{}.mp3".format(bird_id, index)
-        call_local_paths.append(call_local_path)
-        with open('output/media/' + call_local_path, 'wb') as f:
-            f.write(requests.get(call_url).content)
+        calls.append({
+            "global_url": call_global_url,
+            "local_url": call_local_url,
+        })
 
-    bird_info = {
+    print(f"Got info for {bird_id}")
+
+    return {
+        "id": bird_id,
         "common_name": common_name,
         "scientific_name": scientific_name,
-        "photograph_paths": photograph_local_paths,
-        "call_paths": call_local_paths,
+        "illustration": illustration,
+        "photographs": photographs,
+        "calls": calls,
     }
-
-    with open(f"output/{bird_id}", "w") as f:
-        f.write(json.dumps(bird_info))
-
-    print("{} done.".format(bird_id))
 
 
 def curl_bird_info_page(bird_id: str) -> str:
