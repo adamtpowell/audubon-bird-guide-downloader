@@ -128,38 +128,38 @@ def curl_bird_list_page(page: int, region_tid: int) -> str:
     response = requests.get(url)
     return response.text
 
+region_to_tid_dict = {
+    "alaska and the north": 130,
+    "california": 116,
+    "eastern-canada": 59,
+    "florida": 44,
+    "great-lakes": 49,
+    "mid-atlantic": 83,
+    "new-england": 48,
+    "northwest": 113,
+    "plains": 121,
+    "rocky-mountains": 110,
+    "southeast": 67,
+    "southwest": 119,
+    "texas": 66,
+    "western-canada": 138
+}
+
 def region_id_to_tid(region_name: str) -> int:
-    region_to_tid_dict = {
-        "alaska and the north": 130,
-        "california": 116,
-        "eastern-canada": 59,
-        "florida": 44,
-        "great-lakes": 49,
-        "mid-atlantic": 83,
-        "new-england": 48,
-        "northwest": 113,
-        "plains": 121,
-        "rocky-mountains": 110,
-        "southeast": 67,
-        "southwest": 119,
-        "texas": 66,
-        "western-canada": 138
-    }
-
     return region_to_tid_dict[region_name]
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog = 'ProgramName',
-        description = 'What the program does',
+        prog = "bird-guide-downloader"
+    )
+    parser.add_argument('-r', '--region',
+        choices = region_to_tid_dict.keys(),
     )
 
+    args = parser.parse_args()
 
-
-    if len(sys.argv) > 1:
-        region_name = sys.argv[1]
-        region_tid = region_id_to_tid(region_name)
+    if args.region != None:
+        region_tid = region_id_to_tid(args.region)
     else:
         region_tid = -1
 
