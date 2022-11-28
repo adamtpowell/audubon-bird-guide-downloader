@@ -19,7 +19,7 @@ def save_bird_media(bird_info: dict):
     print(f"Saved media for {bird_info['id']}")
 
 def save_bird_info(bird_info: dict):
-    with open(f"output/{bird_info['id']}", "w") as f:
+    with open(f"output/{bird_info['id']}.bird", "w") as f:
         f.write(json.dumps(bird_info))
 
     print(f"saved info for {bird_info['id']}")

@@ -1,8 +1,10 @@
+import glob
+import json
 from multiprocessing import Pool
 import argparse
 import os
-from output import save_bird_info
-from utils import get_bird_info
+from output import save_bird_info, save_bird_media
+import utils
 from itertools import repeat
 
 from utils import region_to_tid_dict, region_id_to_tid, reset_output, get_bird_ids
@@ -20,13 +22,13 @@ Organize utils
 """
 
 # This can't be dynamic, since it needs to be pickleable.
-def get_bird(args): # Don't grab or overwrite existing birds unless the flag is set to true.
+def get_bird_info(args): # Don't grab or overwrite existing birds unless the flag is set to true.
     (bird_id, overwrite) = args
-    if os.path.exists(f"./output/{bird_id}") and not overwrite:
+    if os.path.exists(f"./output/{bird_id}.bird") and not overwrite:
         print(f"The file for {bird_id} already exists")
         return
 
-    bird_info = get_bird_info(bird_id)
+    bird_info = utils.get_bird_info(bird_id)
     save_bird_info(bird_info)
 
 def subcommand_get_info(args):
@@ -37,7 +39,24 @@ def subcommand_get_info(args):
 
     bird_ids = get_bird_ids(0, region_tid)
 
-    Pool(processes = 8).map(get_bird, zip(bird_ids, repeat(args.overwrite)))
+    Pool(processes = 8).map(get_bird_info, zip(bird_ids, repeat(args.overwrite)))
+
+def subcommand_get_media(args):
+    # Load bird info from files.
+    bird_files = glob.glob("./output/*.bird")
+
+    def bird_info_from_file(path):
+        with open(path, "r") as f:
+            return json.loads("\n".join(f.readlines()))
+
+    bird_infos = [bird_info_from_file(path) for path in bird_files]
+
+    Pool(processes = 8).map(save_bird_media, bird_infos)
+
+def subcommand_reset_output(args):
+    reset_output()
+
+    print("Output reset.")
 
 
 if __name__ == "__main__":
@@ -51,12 +70,13 @@ if __name__ == "__main__":
         choices = region_to_tid_dict.keys(),
     )
     get_info_parser.add_argument('-o', '--overwrite', action="store_true")
-
     get_info_parser.set_defaults(func=subcommand_get_info)
 
     get_media_parser = subparsers.add_parser("get-media")
+    get_media_parser.set_defaults(func=subcommand_get_media)
 
     reset_output_parser = subparsers.add_parser("reset-output")
+    reset_output_parser.set_defaults(func=subcommand_reset_output)
 
     # Parse arguments and run the subcommand
     args = parser.parse_args()
