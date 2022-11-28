@@ -14,7 +14,7 @@ def get_bird_ids(starting_page: int, region_tid: int) -> List[str]:
 
     soup = BeautifulSoup(page_content, 'html.parser')
     bird_paths = soup.select(".bird-card-grid-container .common-name > a")
-    bird_ids = [bird_path['href'].replace("/field-guide/bird/","") for bird_path in bird_paths]
+    bird_ids = [bird_path['href'].replace("/field-guide/bird/","").replace("https://www.audubon.org", "") for bird_path in bird_paths]
 
     print("Loading page", starting_page)
 
@@ -46,6 +46,7 @@ def save_bird(bird_id: str) -> str:
     expected_fields = 0 # This stores the number of fields currently expected. Used for correcting empty fields.
 
     common_name = soup.find(class_="common-name").string.strip()
+
     fields.append(common_name)
     expected_fields += 1
 
@@ -86,25 +87,46 @@ def save_bird(bird_id: str) -> str:
 
     # Calls
     call_parent = soup.find(class_="field-name-field-bird-audio")
-    call_elements = call_parent.find_all("a") if call_parent else []
+    call_elements = call_parent.find_all(class_="bird-audio-item") if call_parent else []
+    '''
+    Looks like audio is no longer in the form of links!
+
+    get the audio elements. download from the src link.\
+
+    <div class="field-name-field-bird-audio">
+        <div class="no-bullets">
+            <div class="bird-audio-item">
+                <button aria-label="Play Aberts Towhee song sound" class="bird-player-button" title="Play Aberts Towhee song sound">
+                                            song                          </button>
+                <audio class="bird-native-player" src="https://nas-national-prod.s3.amazonaws.com/birds/audio/ABETOW_1.song_AZkc_1.mp3?tok=1626941160"></audio>
+            </div>
+            <div class="bird-audio-item">
+                <button aria-label="Play Aberts Towhee call sound" class="bird-player-button" title="Play Aberts Towhee call sound">
+                                            call                          </button>
+                <audio class="bird-native-player" src="https://nas-national-prod.s3.amazonaws.com/birds/audio/ABETOW_2.call_AZkc_1.mp3?tok=1626941160"></audio>
+            </div>
+        </div>
+    </div>
+    '''
 
     if len(call_elements) == 0:
         print("No calls for {}".format(bird_id))
 
     for index, call_element in enumerate(call_elements):
+        button = call_element.find("button")
+        audio = call_element.find("audio")
 
-        call_url = call_element['href']
+        call_url = audio['src']
         try:
-            call_description = call_element.contents[1].strip()
+            call_description = button['title'].strip()
         except:
             call_description = "No description found"
 
-        call_local_path = "audubon-call-{}-{}.mp3".format(bird_id, index)
+        call_local_path = "audubon-sound-{}-{}.mp3".format(bird_id, index)
         with open('output/media/' + call_local_path, 'wb') as f:
             f.write(requests.get(call_url).content)
         fields.append("[sound:{}]".format(call_local_path))
         fields.append(call_description)
-
 
     expected_fields += 20
     fields = fields[:expected_fields] # Truncate if there are more calls than desired.
