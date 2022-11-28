@@ -52,15 +52,13 @@ def get_bird_info(bird_id: str) -> dict:
 
     photograph_elements = soup.select(".grid-gallery__lightbox")
     for i in range(len(photograph_elements)):
-        # try:
-            photograph_global_url = photograph_elements[i]['data-href']
-            photograph_local_url = "audubon-photo-{}-{}.jpg"
+        photograph_global_url = photograph_elements[i]['data-href']
+        photograph_local_url = "audubon-photo-{}-{}.jpg".format(bird_id, i)
 
-            photographs.append({
-                "global_url": photograph_global_url,
-                "local_url": photograph_local_url,
-            })
-        # except: pass
+        photographs.append({
+            "global_url": photograph_global_url,
+            "local_url": photograph_local_url,
+        })
 
     # Download calls
     calls = []
