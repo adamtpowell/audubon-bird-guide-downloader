@@ -1,3 +1,4 @@
+import json
 from bs4 import BeautifulSoup
 import requests
 from typing import List
@@ -25,30 +26,13 @@ def reset_output():
     os.makedirs("output")
     os.makedirs("output/media")
 
-def save_bird(bird_id: str) -> str:
+# Saves the files related to a single bird
+def save_bird(bird_id: str):
     page_content = curl_bird_info_page(bird_id)
     soup = BeautifulSoup(page_content, 'html.parser')
 
-    # Holds each tab seperated card field in the following order:
-    # Common Name
-    # Scientific Name
-    # Illustration <img> tag
-    # Photo <img> tag
-    # for 10 calls:
-    #   Call audio link
-    #   Call label
-
-    fields: List[str] = []
-    expected_fields = 0 # This stores the number of fields currently expected. Used for correcting empty fields.
-
     common_name = soup.find(class_="common-name").string.strip()
-
-    fields.append(common_name)
-    expected_fields += 1
-
     scientific_name = soup.find(class_="scientific-name").string.strip()
-    fields.append(scientific_name)
-    expected_fields += 1
 
     # Illustration
     try:
@@ -57,11 +41,8 @@ def save_bird(bird_id: str) -> str:
         illustration_local_path = "audubon-illustration-{}.jpg".format(bird_id)
         with open('output/media/' + illustration_local_path, 'wb') as f:
             f.write(requests.get(illustration_url).content)
-        fields.append('"<img src=""{}"">"'.format(illustration_local_path))
     except:
         print("{} failed to find illustration".format(bird_id))
-        fields.append("IMAGE NOT FOUND")
-    expected_fields += 1
 
     # Download photographs.
     photograph_elements = soup.select(".grid-gallery__lightbox")
@@ -72,42 +53,17 @@ def save_bird(bird_id: str) -> str:
             photograph_local_paths.append("audubon-photo-{}-{}.jpg".format(bird_id, i))
             with open('output/media/' + photograph_local_paths[i], 'wb') as f:
                 f.write(requests.get(photograph_url).content)
-            fields.append('"<img src=""{}"">"'.format(photograph_local_paths[i]))
         except:
-            fields.append("IMAGE NOT FOUND")
+            pass
 
-    expected_fields += 10
-    fields = fields[:expected_fields] # Truncate if there are more calls than desired.
-    while len(fields) < expected_fields:
-        fields.append("")
-
-    # Calls
+    # Download calls
     call_parent = soup.find(class_="field-name-field-bird-audio")
     call_elements = call_parent.find_all(class_="bird-audio-item") if call_parent else []
-    '''
-    Looks like audio is no longer in the form of links!
-
-    get the audio elements. download from the src link.\
-
-    <div class="field-name-field-bird-audio">
-        <div class="no-bullets">
-            <div class="bird-audio-item">
-                <button aria-label="Play Aberts Towhee song sound" class="bird-player-button" title="Play Aberts Towhee song sound">
-                                            song                          </button>
-                <audio class="bird-native-player" src="https://nas-national-prod.s3.amazonaws.com/birds/audio/ABETOW_1.song_AZkc_1.mp3?tok=1626941160"></audio>
-            </div>
-            <div class="bird-audio-item">
-                <button aria-label="Play Aberts Towhee call sound" class="bird-player-button" title="Play Aberts Towhee call sound">
-                                            call                          </button>
-                <audio class="bird-native-player" src="https://nas-national-prod.s3.amazonaws.com/birds/audio/ABETOW_2.call_AZkc_1.mp3?tok=1626941160"></audio>
-            </div>
-        </div>
-    </div>
-    '''
 
     if len(call_elements) == 0:
         print("No calls for {}".format(bird_id))
 
+    call_local_paths = []
     for index, call_element in enumerate(call_elements):
         button = call_element.find("button")
         audio = call_element.find("audio")
@@ -119,19 +75,22 @@ def save_bird(bird_id: str) -> str:
             call_description = "No description found"
 
         call_local_path = "audubon-sound-{}-{}.mp3".format(bird_id, index)
+        call_local_paths.append(call_local_path)
         with open('output/media/' + call_local_path, 'wb') as f:
             f.write(requests.get(call_url).content)
-        fields.append("[sound:{}]".format(call_local_path))
-        fields.append(call_description)
 
-    expected_fields += 20
-    fields = fields[:expected_fields] # Truncate if there are more calls than desired.
-    while len(fields) < expected_fields:
-        fields.append("")
+    bird_info = {
+        "common_name": common_name,
+        "scientific_name": scientific_name,
+        "photograph_paths": photograph_local_paths,
+        "call_paths": call_local_paths,
+    }
+
+    with open(f"output/{bird_id}", "w") as f:
+        f.write(json.dumps(bird_info))
 
     print("{} done.".format(bird_id))
 
-    return "\t".join(fields)
 
 def curl_bird_info_page(bird_id: str) -> str:
     response = requests.get("https://www.audubon.org/field-guide/bird/{}".format(bird_id))

@@ -24,6 +24,3 @@ if __name__ == "__main__":
 
     print("Loading birds...")
     bird_list = Pool(processes = 8).map(save_bird, bird_ids)
-
-    with open("output/birds.txt", "w") as f:
-        f.write("\n".join(bird_list))
