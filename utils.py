@@ -3,8 +3,10 @@ import requests
 from typing import List
 import os
 import shutil
+import config
 
 def get_bird_ids(starting_page: int, region_tid: int) -> List[str]:
+
     page_content = curl_bird_list_page(starting_page, region_tid)
     bird_ids: List[str] = []
 
@@ -12,7 +14,7 @@ def get_bird_ids(starting_page: int, region_tid: int) -> List[str]:
     bird_paths = soup.select(".bird-card-grid-container .common-name > a")
     bird_ids = [bird_path['href'].replace("/field-guide/bird/","").replace("https://www.audubon.org", "") for bird_path in bird_paths]
 
-    print("Loading page", starting_page)
+    print(f"Loading page {starting_page} for region {region_tid_to_id(region_tid)}")
 
     if len(bird_ids) == 0:
         return []
@@ -52,13 +54,13 @@ def get_bird_info(bird_id: str) -> dict:
 
     photograph_elements = soup.select(".grid-gallery__lightbox")
     for i in range(len(photograph_elements)):
-        photograph_global_url = photograph_elements[i]['data-href']
-        photograph_local_url = "audubon-photo-{}-{}.jpg".format(bird_id, i)
+            photograph_global_url = photograph_elements[i]['data-href']
+            photograph_local_url = "audubon-photo-{}-{}.jpg".format(bird_id, i)
 
-        photographs.append({
-            "global_url": photograph_global_url,
-            "local_url": photograph_local_url,
-        })
+            photographs.append({
+                "global_url": photograph_global_url,
+                "local_url": photograph_local_url,
+            })
 
     # Download calls
     calls = []
@@ -100,22 +102,11 @@ def curl_bird_list_page(page: int, region_tid: int) -> str:
     response = requests.get(url)
     return response.text
 
-region_to_tid_dict = {
-    "alaska and the north": 130,
-    "california": 116,
-    "eastern-canada": 59,
-    "florida": 44,
-    "great-lakes": 49,
-    "mid-atlantic": 83,
-    "new-england": 48,
-    "northwest": 113,
-    "plains": 121,
-    "rocky-mountains": 110,
-    "southeast": 67,
-    "southwest": 119,
-    "texas": 66,
-    "western-canada": 138
-}
 
 def region_id_to_tid(region_name: str) -> int:
-    return region_to_tid_dict[region_name]
+    return config.region_to_tid_dict[region_name]
+
+def region_tid_to_id(region_tid: str) -> int:
+    inverse = {v: k for k, v in config.region_to_tid_dict.items()}
+
+    return inverse[region_tid]
